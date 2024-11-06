@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 $serverName = "192.168.0.100";
 $database = "smart_queue";
 $username = "smartqueue";
-$password = "admin1234";
+$password = "Admin1234";
 
 try {
     $conn = new PDO("sqlsrv:server=$serverName,1433;Database=$database", $username, $password);
