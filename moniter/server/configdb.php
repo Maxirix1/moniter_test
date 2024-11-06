@@ -3,7 +3,7 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 $serverName = "192.168.0.100";
-$database = "smartqueue";
+$database = "smart_queue";
 $username = "smartqueue";
 $password = "admin1234";
 
