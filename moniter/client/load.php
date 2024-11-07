@@ -10,41 +10,54 @@ error_reporting(E_ALL);
 function getColorClass($waitting_time)
 {
     if ($waitting_time >= 0 && $waitting_time <= 5) {
-        return 'text-red-600';
+        return 'color: red;';
     } elseif ($waitting_time >= 6 && $waitting_time <= 10) {
-        return 'text-amber-400';
+        return 'color: #eba134;';
     } else {
-        return 'text-green-400';
+        return 'color: #18b300;';
     }
 }
 
 try {
-    $department = 'ห้องตรวจโรคทั่วไป';
-    $sql = "SELECT * FROM visit_info WHERE visit_date = '31102567' AND status = 'รอ' AND department = 'ทันตกรรม' ORDER BY CONVERT(INT, waitting_time) , check_in ASC ";
+
+    date_default_timezone_set('Asia/Bangkok');
+    $currentDate = date('dmY');
+    $dateTH = date('d') . date('m') . (date('Y') + 543);
+
+    $department = 'ยาด่วน';
+
+    $sql = "SELECT * FROM visit_info WHERE visit_date = :date AND status = 'รอ' AND department = :department ORDER BY CONVERT(INT, waitting_time) , check_in ASC ";
     $stmt = $conn->prepare($sql);
-    // $stmt->bindParam("department", $department);
+    $stmt->bindParam(":date", $dateTH);
+    $stmt->bindParam(":department", $department);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql_ready = "SELECT * FROM visit_info WHERE visit_date = '31102567' AND status_call = '1' ORDER BY visit_time DESC";
+    $sql_ready = "SELECT * FROM visit_info WHERE visit_date = :date AND status_call = '1' AND department = :department ORDER BY visit_time DESC";
     $stmt_ready = $conn->prepare($sql_ready);
+    $stmt_ready->bindParam(":date", $dateTH);
+    $stmt_ready->bindParam(":department", $department);
     $stmt_ready->execute();
     $popup = $stmt_ready->fetch(PDO::FETCH_ASSOC);
 
-    $sql_room = "SELECT * FROM visit_info WHERE visit_date = '31102567' AND department = 'ห้องตรวจ' AND status = 'รอ' ORDER BY CONVERT(INT, waitting_q) ASC";
+    $sql_room = "SELECT * FROM visit_info WHERE visit_date = :date AND department = 'ห้องตรวจ' AND status = 'รอ' ORDER BY CONVERT(INT, waitting_q) ASC";
     $stmt_room = $conn->prepare($sql_room);
+    $stmt_room->bindParam(":date", $dateTH);
     $stmt_room->execute();
     $room = $stmt_room->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql_roomR = "SELECT * FROM visit_info WHERE visit_date = '31102567' AND department = 'ห้องตรวจ' AND status = 'กำลัง' ORDER BY station DESC";
+    $sql_roomR = "SELECT * FROM visit_info WHERE visit_date = :date AND department = 'ห้องตรวจ' AND status = 'กำลัง' ORDER BY station DESC";
     $stmt_roomR = $conn->prepare($sql_roomR);
+    $stmt_roomR->bindParam(":date", $dateTH);
     $stmt_roomR->execute();
     $roomR = $stmt_roomR->fetch(PDO::FETCH_ASSOC);
 
-    $sql_q = "SELECT * FROM visit_info WHERE visit_date = '31102567' AND status = 'กำลัง' AND department = 'ทันตกรรม' ORDER BY station DESC";
-    $stmt = $conn->prepare($sql_q);
-    $stmt->execute();
-    $row_q = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $sql_q = "SELECT * FROM visit_info WHERE visit_date = :date AND status = 'กำลัง' AND department = :department ORDER BY station DESC";
+    $stmt_q = $conn->prepare($sql_q);
+    $stmt_q->bindParam(":department", $department);
+    $stmt_q->bindParam(":date", $dateTH);
+    $stmt_q->execute();
+    $row_q = $stmt_q->fetchAll(PDO::FETCH_ASSOC);
 
     $sql_cross = "SELECT * FROM visit_info WHERE status = 'ข้าม'";
     $stmt_cross = $conn->prepare($sql_cross);
@@ -133,20 +146,20 @@ if ($rows) {
     foreach ($rows as $row) {
         $color = getColorClass($row['waitting_time']);
         $historyHtml .= '
-            <tr class="text-start border-t font-semibold text-2xl">
-                <td class="px-4 py-4 text-center font-bold text-[#042e5c]">' . htmlspecialchars($row['visit_q_no']) . '</td>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding-left: 10px; color:#042e5c; font-weight:600;">' . htmlspecialchars($row['visit_q_no']) . '</td>
                 <td class="px-4 py-4">' . htmlspecialchars($row['name']) . ' ' . htmlspecialchars($row['surname']) . '</td>
-                <td class="px-4 py-4 text-center font-bold ' . $color . '">' . htmlspecialchars($row['waitting_time']) . ' นาที</td>
+                <td style="' . $color . ' font-weight: 600;">' . htmlspecialchars($row['waitting_time']) . ' นาที</td>
             </tr>';
     }
 } else {
-    $historyHtml .= '<tr><td colspan="3" class="text-center px-4 py-2">ไม่มีข้อมูล</td></tr>';
+    $historyHtml .= '<tr><td colspan="3" class="text-center px-4 py-2">ไม่มีข้อมูล</td></tr> ';
 }
 
 $crossData = '';
 if ($cross) {
     foreach ($cross as $rowcross) {
-        $crossData .= '<p class="text-lg"> | คุณ ' . htmlspecialchars($rowcross['name']) . ' ' . htmlspecialchars($rowcross['visit_q_no']) . ' ' . htmlspecialchars($rowcross['station']) . '</p>';
+        $crossData .= '<p> | คุณ ' . htmlspecialchars($rowcross['name']) . ' ' . htmlspecialchars($rowcross['visit_q_no']) . ' ' . htmlspecialchars($rowcross['station']) . '</p>';
     }
 } else {
     $crossData .= '<p class="text-white">ไม่มีการเรียกคิวซ้ำ</p>';
@@ -161,13 +174,15 @@ if ($popup) {
     $prefix = isset($matchs[1]) ? $matchs[1] : '';
     $number = isset($matchs[2]) ? $matchs[2] : '';
 
-    $popupTable .= '<div class="contentPopup text-start bg-white rounded-3xl p-6 flex items-center justify-between" id="popup">
-            <div class="flex flex-col text-start">
-                <h3 class="text-4xl text-green-700 font-semibold">' . htmlspecialchars($popup['station']) . '</h3>
+    $popupTable .= '<div class="contentPopup" id="popup">
+            <div class="Name">
+                <h3 style="
+  color: rgb(9, 87, 41);
+                ">' . htmlspecialchars($popup['station']) . '</h3>
                 <h3 class="text-4xl font-semibold mt-2">' . htmlspecialchars($popup['name']) . ' ' . htmlspecialchars($popup['surname']) . '</h3>
             </div>
 
-            <div class="bg-orange-500 p-4 w-[100px] h-[100px] text-center items-center flex justify-center rounded-2xl">
+            <div class="station-box-number-queue">
                 <h1 class="text-white text-3xl font-bold"><span class="text-4xl">' . htmlspecialchars($prefix) . '</span><br>' . htmlspecialchars($number) . '</h1>
             </div>
     </div>';
@@ -190,7 +205,7 @@ if ($row_q) {
         $prefix = isset($matchs[1]) ? $matchs[1] : '';
         $number = isset($matchs[2]) ? $matchs[2] : '';
 
-        $row_Qu .= '<div class="mb-6 text-start bg-white rounded-xl p-4 flex items-center justify-between">
+        $row_Qu .= '<div class="text-start bg-white rounded-xl p-4 flex items-center justify-between">
         <div>
             <p class="text-2xl text-green-700 font-bold">' . htmlspecialchars($rowq['station']) . '</p>
             <h3 class="text-2xl font-bold mt-2">' . htmlspecialchars($rowq['name']) . ' ' . htmlspecialchars($rowq['surname']) . '</h3>
