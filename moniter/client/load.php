@@ -24,7 +24,7 @@ try {
     $currentDate = date('dmY');
     $dateTH = date('d') . date('m') . (date('Y') + 543);
 
-    $department = 'ยาด่วน';
+    $department = 'ทันตกรรม';
 
     $sql = "SELECT * FROM visit_info WHERE visit_date = :date AND status = 'รอ' AND department = :department ORDER BY CONVERT(INT, waitting_time) , check_in ASC ";
     $stmt = $conn->prepare($sql);
