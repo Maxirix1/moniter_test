@@ -28,7 +28,10 @@
                     if (data.popupTable && data.popupTable !== lastPopupData) {
                         lastPopupData = data.popupTable;
 
-                        $('#popupTable').html(data.popupTable).fadeIn();
+                        $('#popupTable').html(data.popupTable).fadeIn(function () {
+                            const popupData = data.popupData;
+                            popupData(popupData);
+                        });
 
                         const popupData = data.popupData;
                         if (Array.isArray(popupData) && popupData.length > 0) {
